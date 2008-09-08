@@ -34,6 +34,7 @@ class Joeh_Net_Curl_Option {
 		"inFileSize" => CURLOPT_INFILESIZE,
 		"verbose" => CURLOPT_VERBOSE,
 		/* "header" => CURLOPT_HEADER, */
+		"headerFunction" => CURLOPT_HEADERFUNCTION,
 		"noProgress" => CURLOPT_NOPROGRESS,
 		"nobody" => CURLOPT_NOBODY,
 		"failOnError" => CURLOPT_FAILONERROR,
