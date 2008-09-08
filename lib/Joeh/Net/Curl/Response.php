@@ -89,7 +89,7 @@ class Joeh_Net_Curl_Response {
 		}
 
 		$this->hasHeader = true;
-		$headers = split("\r\n", trim($response, "\r\n"));
+		$headers = split(PHP_EOL, trim($response, PHP_EOL));
 		foreach($headers as $header) {
 			if(empty($header)) {
 				break;
@@ -124,3 +124,4 @@ class Joeh_Net_Curl_Response {
 	}
 }
 ?>
+

@@ -82,7 +82,7 @@ class Joeh_Net_Curl_Option {
 	);
 
 	private $options = array();
-	
+
 	public function __call($option, $arguments) {
 		if(!isset($this->methods[$option])) {
 			throw new Joeh_Net_Curl_Exception("Invalid option - {$option}");
@@ -101,16 +101,17 @@ class Joeh_Net_Curl_Option {
 		$option = $this->methods[$option];
 		return isset($this->options[$option]);
 	}
-	
+
+    public function __unset($option) {
+		$option = $this->methods[$option];
+		unset($this->options[$option]);
+    }
+
 	public function getForExecute() {
 		return $this->options;
 	}
 
-	/*
-	public function __get($option) {
-		return $this->$option();
-	}
-
+    /*
 	public function set($option, $value) {
 		curl_setopt($this->curl->getHandle(), $option, $value);
 	}

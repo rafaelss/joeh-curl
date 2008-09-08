@@ -29,7 +29,7 @@ require_once VENDOR_PATH . "Joeh/Net/Curl.php";
 
 class Joeh_Net_CurlTest extends Joeh_Test_UnitTestCase {
 
-	
+
 	/**
 	 * @var Joeh_Net_Curl $curl
 	 */
@@ -38,7 +38,7 @@ class Joeh_Net_CurlTest extends Joeh_Test_UnitTestCase {
 	public function setUp() {
 		$this->curl = new Joeh_Net_Curl("http://www.google.com");
 	}
-	
+
 	public function tearDown() {
 		$this->curl = null;
 	}
@@ -53,9 +53,22 @@ class Joeh_Net_CurlTest extends Joeh_Test_UnitTestCase {
 	}
 
 	public function testExecute() {
-		$this->assertType("Joeh_Net_Curl_Response", $this->curl->execute());
+        $response = $this->curl->execute();
+		$this->assertType("Joeh_Net_Curl_Response", $response);
+		$this->assertTrue($response->hasHeader());
+        $this->assertSame(302, $response->statusCode());
 	}
-	
+
+    public function testExecuteWithFollowLocationAndOpenBaseDir() {
+        $response = $this->curl
+            ->followLocation(true)
+            ->execute();
+
+        $this->assertType("Joeh_Net_Curl_Response", $response);
+        $this->assertTrue($response->hasHeader());
+        $this->assertSame(200, $response->statusCode());
+    }
+
 	public function testUndefinedOption() {
 		$this->setExpectedException("Joeh_Net_Curl_Exception", "Invalid option - invalidOption");
 		$this->curl->invalidOption("invalid value");

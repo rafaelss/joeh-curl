@@ -23,14 +23,28 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 */
 
-require_once "Joeh/Net/Curl/Response.php";
-require_once "Joeh/Net/Curl/Option.php";
+require_once 'Joeh/Net/Curl/Response.php';
+require_once 'Joeh/Net/Curl/Option.php';
 
 class Joeh_Net_Curl {
 
+    #####################
+    ## PRIVATE ATTRIBUTES
+    #####################
+
 	private $handle;
-	
+
 	private $option;
+
+    private $curlExec = true;
+
+    private $curlExecLoops = 0;
+
+    private $curlExecMaxLoops = 20;
+
+    ################
+    ## MAGIC METHODS
+    ################
 
 	public function __construct($url = null) {
 		$this->init();
@@ -47,6 +61,10 @@ class Joeh_Net_Curl {
 		return $this;
 	}
 
+    #################
+    ## PUBLIC METHODS
+    #################
+
 	public function getHandle() {
 		return $this->handle;
 	}
@@ -56,9 +74,16 @@ class Joeh_Net_Curl {
 	}
 
 	public function execute() {
+        if(isset($this->option->followLocation)) {
+            if(!@curl_setopt(CURLOPT_FOLLOWLOCATION, $this->option->followLocation)) {
+                unset($this->option->followLocation);
+                $this->curlExec = false;
+            }
+        }
+
 		$handle = $this->getHandle();
 		curl_setopt_array($handle, $this->option->getForExecute());
-		$response = curl_exec($handle);
+		$response = $this->exec($handle);
 		return new Joeh_Net_Curl_Response($response);
 	}
 
@@ -71,5 +96,50 @@ class Joeh_Net_Curl {
 		curl_setopt($this->handle, CURLOPT_HEADER, true);
 		curl_setopt($this->handle, CURLOPT_RETURNTRANSFER, true);
 	}
+
+    private function exec($handle) {
+        if($this->curlExec) {
+            return curl_exec($handle);
+        }
+
+        if ($this->curlExecLoops++ >= $this->curlExecMaxLoops) {
+            $this->curlExecLoops = 0;
+            return false;
+        }
+
+        $data = curl_exec($handle);
+
+        $debbbb = $data;
+        list($header, $data) = explode(PHP_EOL . PHP_EOL, $data, 2);
+        $httpCode = curl_getinfo($handle, CURLINFO_HTTP_CODE);
+
+        if ($httpCode == 301 || $httpCode == 302) {
+            $matches = array();
+            preg_match('/Location:(.*?)\n/', $header, $matches);
+            $url = @parse_url(trim(array_pop($matches)));
+            if (!$url) {
+                $this->curlExecLoops = 0;
+                return $data;
+            }
+
+            $lastUrl = parse_url(curl_getinfo($handle, CURLINFO_EFFECTIVE_URL));
+            $newUrl = $url['scheme'] . '://' . $url['host'];
+
+            if(!empty($url['path'])) {
+                $newUrl .= $url['path'];
+            }
+
+            if(!empty($url['query'])) {
+                $newUrl .= '?' . $url['query'];
+            }
+
+            curl_setopt($handle, CURLOPT_URL, $newUrl);
+            return $this->exec($handle);
+        }
+        else {
+            $this->curlExecLoops = 0;
+            return $debbbb;
+        }
+    }
 }
 ?>
